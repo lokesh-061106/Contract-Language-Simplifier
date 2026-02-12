@@ -37,6 +37,15 @@ app.config.from_object(get_config())
 db.init_app(app)
 jwt = JWTManager(app)
 
+# Create database tables before first request
+@app.before_request
+def create_tables():
+    """Create database tables if they don't exist"""
+    if not hasattr(app, '_database_initialized'):
+        with app.app_context():
+            db.create_all()
+            app._database_initialized = True
+
 # Create upload folder
 Path(app.config['UPLOAD_FOLDER']).mkdir(parents=True, exist_ok=True)
 
