@@ -5,7 +5,8 @@ FROM python:3.10-slim as base
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    NLTK_DATA=/usr/local/share/nltk_data
 
 # Set work directory
 WORKDIR /app
@@ -26,12 +27,11 @@ RUN pip install --upgrade pip && \
 # Download spaCy model
 RUN python -m spacy download en_core_web_sm
 
-# Download NLTK data
-RUN python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab', quiet=False)"
-ENV NLTK_DATA=/root/nltk_data
-
 # Copy application code
 COPY . .
+
+# Download NLTK data (only punkt, not punkt_tab)
+RUN python -c "import nltk; nltk.download('punkt', download_dir='/usr/local/share/nltk_data')"
 
 # Create necessary directories
 RUN mkdir -p uploads model_cache
