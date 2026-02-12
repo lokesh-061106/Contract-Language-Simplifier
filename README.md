@@ -6,6 +6,7 @@ colorTo: purple
 sdk: docker
 pinned: false
 license: mit
+# Build: v1.1
 ---
 
 # Contract Language Simplifier
