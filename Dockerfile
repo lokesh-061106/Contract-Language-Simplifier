@@ -27,7 +27,8 @@ RUN pip install --upgrade pip && \
 RUN python -m spacy download en_core_web_sm
 
 # Download NLTK data
-RUN python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab')"
+RUN python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab', quiet=False)"
+ENV NLTK_DATA=/root/nltk_data
 
 # Copy application code
 COPY . .
