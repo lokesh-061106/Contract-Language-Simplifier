@@ -42,6 +42,10 @@ jwt = JWTManager(app)
 def create_tables():
     """Create database tables if they don't exist"""
     if not hasattr(app, '_database_initialized'):
+        # Ensure instance folder exists
+        instance_path = os.path.join(app.root_path, 'instance')
+        os.makedirs(instance_path, exist_ok=True)
+        
         with app.app_context():
             db.create_all()
             app._database_initialized = True
