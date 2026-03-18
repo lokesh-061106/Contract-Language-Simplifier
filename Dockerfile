@@ -6,7 +6,8 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    NLTK_DATA=/usr/local/share/nltk_data
+    NLTK_DATA=/usr/local/share/nltk_data \
+    FLASK_ENV=production
 
 # Set work directory
 WORKDIR /app
@@ -30,11 +31,13 @@ RUN python -m spacy download en_core_web_sm
 # Copy application code
 COPY . .
 
-# Download NLTK data (only punkt, not punkt_tab)
+# Download NLTK data
 RUN python -c "import nltk; nltk.download('punkt', download_dir='/usr/local/share/nltk_data')"
 
-# Create necessary directories
-RUN mkdir -p uploads model_cache
+# Create necessary directories and set permissions for Hugging Face Spaces
+# Spaces runs as user 1000, so we need to ensure these directories are writable
+RUN mkdir -p uploads model_cache instance && \
+    chmod -R 777 uploads model_cache instance
 
 # Expose port 7860 (Hugging Face Spaces requirement)
 EXPOSE 7860

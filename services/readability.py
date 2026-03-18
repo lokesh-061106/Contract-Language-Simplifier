@@ -3,8 +3,15 @@ Readability Scoring Service
 Calculates various readability metrics for text analysis
 """
 
-import textstat
 from typing import Dict
+
+# Import textstat lazily and handle missing installation gracefully
+try:
+    import textstat
+    _TEXTSTAT_AVAILABLE = True
+except Exception:
+    textstat = None
+    _TEXTSTAT_AVAILABLE = False
 
 
 class ReadabilityAnalyzer:
@@ -12,7 +19,11 @@ class ReadabilityAnalyzer:
     
     def __init__(self):
         """Initialize readability analyzer"""
-        textstat.set_lang('en')
+        if _TEXTSTAT_AVAILABLE:
+            try:
+                textstat.set_lang('en')
+            except Exception:
+                pass
     
     def flesch_kincaid_grade(self, text: str) -> float:
         """
@@ -25,6 +36,8 @@ class ReadabilityAnalyzer:
         Returns:
             Grade level (e.g., 12.5 means 12th grade)
         """
+        if not _TEXTSTAT_AVAILABLE:
+            return 0.0
         try:
             return textstat.flesch_kincaid_grade(text)
         except Exception:
@@ -41,6 +54,8 @@ class ReadabilityAnalyzer:
         Returns:
             Fog index score
         """
+        if not _TEXTSTAT_AVAILABLE:
+            return 0.0
         try:
             return textstat.gunning_fog(text)
         except Exception:
@@ -57,6 +72,8 @@ class ReadabilityAnalyzer:
         Returns:
             Reading ease score (0-100)
         """
+        if not _TEXTSTAT_AVAILABLE:
+            return 0.0
         try:
             return textstat.flesch_reading_ease(text)
         except Exception:
@@ -72,6 +89,8 @@ class ReadabilityAnalyzer:
         Returns:
             SMOG index score
         """
+        if not _TEXTSTAT_AVAILABLE:
+            return 0.0
         try:
             return textstat.smog_index(text)
         except Exception:
@@ -87,6 +106,8 @@ class ReadabilityAnalyzer:
         Returns:
             ARI score
         """
+        if not _TEXTSTAT_AVAILABLE:
+            return 0.0
         try:
             return textstat.automated_readability_index(text)
         except Exception:
@@ -102,6 +123,8 @@ class ReadabilityAnalyzer:
         Returns:
             Coleman-Liau score
         """
+        if not _TEXTSTAT_AVAILABLE:
+            return 0.0
         try:
             return textstat.coleman_liau_index(text)
         except Exception:

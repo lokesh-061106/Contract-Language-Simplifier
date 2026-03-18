@@ -18,9 +18,12 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     
     # Database settings
-    # Use instance folder for database to avoid permission issues and allow persistence
+    # Local dev: SQLite in instance folder. Production/HF Spaces: set DATABASE_URL to a shared DB (e.g. PostgreSQL).
     DB_PATH = os.path.join(BASE_DIR, 'instance', 'database.db')
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or f'sqlite:///{DB_PATH}'
+    _db_url = os.environ.get('DATABASE_URL')
+    if _db_url and _db_url.startswith('postgres://'):
+        _db_url = _db_url.replace('postgres://', 'postgresql://', 1)
+    SQLALCHEMY_DATABASE_URI = _db_url or f'sqlite:///{DB_PATH}'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # SQLite Options for better concurrency
@@ -90,12 +93,18 @@ class DevelopmentConfig(Config):
 
 
 class ProductionConfig(Config):
-    """Production configuration"""
+    """Production configuration (Hugging Face Spaces, etc.). Requires DATABASE_URL and secrets."""
     DEBUG = False
     TESTING = False
     JWT_COOKIE_SECURE = True
-    
-    # Override with environment variables in production
+
+    # Production: use shared database only (no local file). Set DATABASE_URL in HF Space secrets.
+    _prod_db = os.environ.get('DATABASE_URL')
+    if _prod_db and _prod_db.startswith('postgres://'):
+        _prod_db = _prod_db.replace('postgres://', 'postgresql://', 1)
+    SQLALCHEMY_DATABASE_URI = _prod_db  # None if not set → app will fail with clear message
+
+    # Production: require secure keys from environment (set in Hugging Face Space secrets)
     SECRET_KEY = os.environ.get('SECRET_KEY')
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
 

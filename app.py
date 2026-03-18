@@ -9,10 +9,12 @@ from datetime import datetime
 from pathlib import Path
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session
 from flask_jwt_extended import (
-    JWTManager, create_access_token, jwt_required, 
+    JWTManager, create_access_token, jwt_required,
     get_jwt_identity, set_access_cookies, unset_jwt_cookies
 )
+from flask_cors import CORS
 from werkzeug.utils import secure_filename
+from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -31,11 +33,40 @@ from services.glossary import get_glossary_service
 
 # Initialize Flask app
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 app.config.from_object(get_config())
+
+# Production / Hugging Face Spaces: require shared database and secure secrets
+if os.environ.get('FLASK_ENV') == 'production':
+    missing = []
+    if not os.environ.get('DATABASE_URL'):
+        missing.append('DATABASE_URL (use a shared PostgreSQL, e.g. Neon or Supabase)')
+    sk = app.config.get('SECRET_KEY') or ''
+    if not sk or sk.startswith('dev-'):
+        missing.append('SECRET_KEY (set a strong random value in Space secrets)')
+    jk = app.config.get('JWT_SECRET_KEY') or ''
+    if not jk or 'change-in-production' in jk:
+        missing.append('JWT_SECRET_KEY (set a strong random value in Space secrets)')
+    if missing:
+        raise RuntimeError(
+            'Production deployment requires these secrets to be set: ' + '; '.join(missing) +
+            '. Add them in your Hugging Face Space → Settings → Repository secrets.'
+        )
 
 # Initialize extensions
 db.init_app(app)
 jwt = JWTManager(app)
+
+# CORS: allow remote browsers (required for Hugging Face Spaces / public web access)
+_cors_origins = os.environ.get('CORS_ORIGINS', '*')
+_origins_list = _cors_origins.split(',') if _cors_origins != '*' else '*'
+CORS(
+    app,
+    resources={r'/*': {'origins': _origins_list}},
+    supports_credentials=(_origins_list != '*'),  # credentials only with specific origins
+    allow_headers=['Content-Type', 'Authorization'],
+    methods=['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE'],
+)
 
 # Create database tables before first request
 @app.before_request
@@ -461,10 +492,12 @@ if __name__ == '__main__':
         print("Database tables created!")
     
     print("Starting Contract Language Simplifier...")
-    print(f"Access the application at: http://localhost:5000")
+    # Hugging Face Spaces requires port 7860; PORT env is set by the platform
+    port = int(os.environ.get('PORT', 7860))
+    print(f"Access the application at: http://0.0.0.0:{port}")
     
     app.run(
         host='0.0.0.0',
-        port=5000,
+        port=port,
         debug=app.config['DEBUG']
     )

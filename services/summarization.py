@@ -3,8 +3,15 @@ Text Summarization Service
 Uses Hugging Face transformers for document summarization
 """
 
-import torch
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+try:
+    import torch
+    from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+    _AI_AVAILABLE = True
+except Exception:
+    torch = None
+    AutoTokenizer = None
+    AutoModelForSeq2SeqLM = None
+    _AI_AVAILABLE = False
 from typing import List
 from pathlib import Path
 
@@ -26,24 +33,27 @@ class SummarizationService:
         # Create cache directory
         Path(self.cache_dir).mkdir(parents=True, exist_ok=True)
         
-        # Determine device
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        
-        print(f"Loading summarization model: {model_name}")
-        print(f"Using device: {self.device}")
-        
-        # Load tokenizer and model
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            model_name,
-            cache_dir=self.cache_dir
-        )
-        
-        self.model = AutoModelForSeq2SeqLM.from_pretrained(
-            model_name,
-            cache_dir=self.cache_dir
-        ).to(self.device)
-        
-        print("Summarization model loaded successfully!")
+        # Determine device and load model if AI deps available
+        if _AI_AVAILABLE:
+            self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            print(f"Loading summarization model: {model_name}")
+            print(f"Using device: {self.device}")
+            # Load tokenizer and model
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                model_name,
+                cache_dir=self.cache_dir
+            )
+            self.model = AutoModelForSeq2SeqLM.from_pretrained(
+                model_name,
+                cache_dir=self.cache_dir
+            ).to(self.device)
+            print("Summarization model loaded successfully!")
+        else:
+            # Fallback: AI not available
+            self.device = 'cpu'
+            self.tokenizer = None
+            self.model = None
+            print("AI dependencies not available — running in fallback mode.")
     
     def summarize(
         self,
@@ -64,6 +74,15 @@ class SummarizationService:
         Returns:
             Summary text
         """
+        # If AI not available, return a simple fallback summary
+        if not _AI_AVAILABLE or self.model is None or self.tokenizer is None:
+            cleaned = text.replace('\n', ' ').strip()
+            # Return first sentence or truncated text
+            end = cleaned.find('.')
+            if end != -1 and end < max_length:
+                return cleaned[:end+1]
+            return (cleaned[:max_length] + '...') if len(cleaned) > max_length else cleaned
+
         # Tokenize input
         inputs = self.tokenizer(
             text,
@@ -72,7 +91,7 @@ class SummarizationService:
             truncation=True,
             padding=True
         ).to(self.device)
-        
+
         # Generate summary
         with torch.no_grad():
             summary_ids = self.model.generate(
@@ -83,10 +102,10 @@ class SummarizationService:
                 num_beams=4,
                 early_stopping=True
             )
-        
+
         # Decode summary
         summary = self.tokenizer.decode(summary_ids[0], skip_special_tokens=True)
-        
+
         return summary.strip()
     
     def summarize_long_text(

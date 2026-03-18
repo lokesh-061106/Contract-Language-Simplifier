@@ -4,8 +4,15 @@ Uses Hugging Face transformers for AI-powered text simplification
 """
 
 import os
-import torch
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+try:
+    import torch
+    from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+    _AI_AVAILABLE = True
+except Exception:
+    torch = None
+    AutoTokenizer = None
+    AutoModelForSeq2SeqLM = None
+    _AI_AVAILABLE = False
 from typing import List, Dict
 from pathlib import Path
 
@@ -27,24 +34,27 @@ class SimplificationService:
         # Create cache directory
         Path(self.cache_dir).mkdir(parents=True, exist_ok=True)
         
-        # Determine device
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        
-        print(f"Loading simplification model: {model_name}")
-        print(f"Using device: {self.device}")
-        
-        # Load tokenizer and model
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            model_name,
-            cache_dir=self.cache_dir
-        )
-        
-        self.model = AutoModelForSeq2SeqLM.from_pretrained(
-            model_name,
-            cache_dir=self.cache_dir
-        ).to(self.device)
-        
-        print("Model loaded successfully!")
+        # Determine device and load model if AI deps available
+        if _AI_AVAILABLE:
+            self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            print(f"Loading simplification model: {model_name}")
+            print(f"Using device: {self.device}")
+            # Load tokenizer and model
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                model_name,
+                cache_dir=self.cache_dir
+            )
+            self.model = AutoModelForSeq2SeqLM.from_pretrained(
+                model_name,
+                cache_dir=self.cache_dir
+            ).to(self.device)
+            print("Model loaded successfully!")
+        else:
+            # Fallback: AI not available, use simple passthrough
+            self.device = 'cpu'
+            self.tokenizer = None
+            self.model = None
+            print("AI dependencies not available — running in fallback mode.")
     
     def simplify_text(
         self,
@@ -75,6 +85,11 @@ class SimplificationService:
         prompt = prompts.get(level, prompts['intermediate'])
         input_text = prompt + text
         
+        # If AI not available, return a simple cleaned/truncated fallback
+        if not _AI_AVAILABLE or self.model is None:
+            cleaned = input_text.replace('\n', ' ').strip()
+            return (cleaned[:max_length] + '...') if len(cleaned) > max_length else cleaned
+
         # Tokenize input
         inputs = self.tokenizer(
             input_text,
@@ -83,7 +98,7 @@ class SimplificationService:
             truncation=True,
             padding=True
         ).to(self.device)
-        
+
         # Generate simplified text
         with torch.no_grad():
             outputs = self.model.generate(
@@ -95,10 +110,10 @@ class SimplificationService:
                 num_beams=4,
                 early_stopping=True
             )
-        
+
         # Decode output
         simplified_text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-        
+
         return simplified_text.strip()
     
     def simplify_long_text(
