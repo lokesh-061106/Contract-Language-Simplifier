@@ -97,6 +97,7 @@ class ProductionConfig(Config):
     DEBUG = False
     TESTING = False
     JWT_COOKIE_SECURE = True
+<<<<<<< HEAD
 
     # Production: use shared database only (no local file). Set DATABASE_URL in HF Space secrets.
     _prod_db = os.environ.get('DATABASE_URL')
@@ -107,6 +108,14 @@ class ProductionConfig(Config):
     # Production: require secure keys from environment (set in Hugging Face Space secrets)
     SECRET_KEY = os.environ.get('SECRET_KEY')
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
+=======
+    
+    # Override with environment variables in production
+    # Override with environment variables in production, but keep defaults if not set
+    # This prevents the app from crashing if these env vars are missing
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'prod-secret-key-please-change'
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or 'prod-jwt-secret-please-change'
+>>>>>>> b3541d74867c2728b1ee7ff3a1c527f754cd24bb
 
 
 class TestingConfig(Config):
