@@ -11,4 +11,8 @@ spacy==3.7.2
 
 # Utilities
 python-dotenv==1.0.0
+<<<<<<< HEAD
 requests==2.31.0
+=======
+requests==2.31.0
+>>>>>>> 2c3dc39751b0a3a237e162d794aa2a458c90aec2
