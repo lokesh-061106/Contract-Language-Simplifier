@@ -1,34 +1,14 @@
-# Core Framework
-Flask==3.0.0
-Flask-SQLAlchemy==3.1.1
-Flask-JWT-Extended==4.6.0
-Flask-CORS==4.0.0
-python-dotenv==1.0.0
-Werkzeug==3.0.1
-click==8.1.7
+streamlit==1.33.0
+pandas==2.2.2
+numpy==1.26.4
 
-# Server
-gunicorn==21.2.0
-
-# Database
-SQLAlchemy==2.0.23
-psycopg2-binary==2.9.9
-
-# Security
-bcrypt==4.1.2
-PyJWT==2.8.0
-
-# AI & NLP (Hugging Face / PyTorch)
-# Note: These are large dependencies. For local dev without GPU, CPU versions are fine.
-transformers==4.47.1
-torch==2.6.0
-sentencepiece==0.1.99
-accelerate==0.25.0
-
-# NLP Tools (text processing)
-spacy==3.7.2
+# NLP (lightweight only)
 nltk==3.8.1
 textstat==0.7.3
 
-# Development / Testing
-pytest==7.4.3
+# Optional (only keep if you REALLY use it in code)
+spacy==3.7.2
+
+# Utilities
+python-dotenv==1.0.0
+requests==2.31.0

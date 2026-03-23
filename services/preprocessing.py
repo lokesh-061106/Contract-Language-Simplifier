@@ -9,16 +9,11 @@ import nltk
 from typing import List, Dict
 from pathlib import Path
 
-# Download required NLTK data
+# Download required NLTK data (be tolerant of different exceptions)
 try:
     nltk.data.find('tokenizers/punkt')
-except LookupError:
+except Exception:
     nltk.download('punkt', quiet=True)
-
-try:
-    nltk.data.find('tokenizers/punkt_tab')
-except LookupError:
-    nltk.download('punkt_tab', quiet=True)
 
 
 class TextPreprocessor:

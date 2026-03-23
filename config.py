@@ -97,25 +97,15 @@ class ProductionConfig(Config):
     DEBUG = False
     TESTING = False
     JWT_COOKIE_SECURE = True
-<<<<<<< HEAD
-
-    # Production: use shared database only (no local file). Set DATABASE_URL in HF Space secrets.
+    # Production database: prefer DATABASE_URL if provided; fall back to Config default
     _prod_db = os.environ.get('DATABASE_URL')
     if _prod_db and _prod_db.startswith('postgres://'):
         _prod_db = _prod_db.replace('postgres://', 'postgresql://', 1)
-    SQLALCHEMY_DATABASE_URI = _prod_db  # None if not set → app will fail with clear message
+    SQLALCHEMY_DATABASE_URI = _prod_db or Config.SQLALCHEMY_DATABASE_URI
 
-    # Production: require secure keys from environment (set in Hugging Face Space secrets)
-    SECRET_KEY = os.environ.get('SECRET_KEY')
-    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
-=======
-    
-    # Override with environment variables in production
-    # Override with environment variables in production, but keep defaults if not set
-    # This prevents the app from crashing if these env vars are missing
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'prod-secret-key-please-change'
-    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or 'prod-jwt-secret-please-change'
->>>>>>> b3541d74867c2728b1ee7ff3a1c527f754cd24bb
+    # Use environment secrets when available, otherwise fall back to safe defaults
+    SECRET_KEY = os.environ.get('SECRET_KEY') or Config.SECRET_KEY
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or Config.JWT_SECRET_KEY
 
 
 class TestingConfig(Config):

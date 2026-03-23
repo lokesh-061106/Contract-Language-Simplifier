@@ -57,7 +57,6 @@ if os.environ.get('FLASK_ENV') == 'production':
 db.init_app(app)
 jwt = JWTManager(app)
 
-<<<<<<< HEAD
 # CORS: allow remote browsers (required for Hugging Face Spaces / public web access)
 _cors_origins = os.environ.get('CORS_ORIGINS', '*')
 _origins_list = _cors_origins.split(',') if _cors_origins != '*' else '*'
@@ -69,24 +68,11 @@ CORS(
     methods=['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE'],
 )
 
-# Create database tables before first request
-@app.before_request
-def create_tables():
-    """Create database tables if they don't exist"""
-    if not hasattr(app, '_database_initialized'):
-        # Ensure instance folder exists
-        instance_path = os.path.join(app.root_path, 'instance')
-        os.makedirs(instance_path, exist_ok=True)
-        
-        with app.app_context():
-            db.create_all()
-            app._database_initialized = True
-=======
-# Create database tables if they don't exist
-# This is crucial for production where we don't run app.py directly
+# Ensure instance folder exists and create database tables once
+instance_path = os.path.join(app.root_path, 'instance')
+os.makedirs(instance_path, exist_ok=True)
 with app.app_context():
     db.create_all()
->>>>>>> b3541d74867c2728b1ee7ff3a1c527f754cd24bb
 
 # Create upload folder
 Path(app.config['UPLOAD_FOLDER']).mkdir(parents=True, exist_ok=True)
