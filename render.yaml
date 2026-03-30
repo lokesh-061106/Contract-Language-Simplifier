@@ -4,7 +4,10 @@ services:
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    # Use Streamlit to run the app; bind to the provided $PORT and listen on all interfaces
+    startCommand: streamlit run app.py --server.port $PORT --server.address 0.0.0.0
     envVars:
       - key: FLASK_ENV
         value: production
+      # SECRET_KEY and JWT_SECRET_KEY should NOT be committed to the repository.
+      # Add them securely in Render dashboard: Settings → Environment.
