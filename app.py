@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import streamlit as st
 import textstat
 import re
@@ -102,3 +103,5 @@ if __name__ == "__main__":
 if __name__ == "__main__":
     main()
 >>>>>>> 29dfa08 (Use Streamlit in render.yaml; fix Streamlit app (app.py))
+=======
+>>>>>>> 552acaf (Add prototype and update app.py and render config)
